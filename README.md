@@ -7,3 +7,5 @@ To start the bot create `configs/config.yaml` config file with contents:
 ```yaml
 tg_token: telegram_token_from_botfather
 ```
+
+You can test it here: https://t.me/normalize_voice_bot
