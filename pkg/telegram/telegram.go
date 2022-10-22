@@ -63,6 +63,10 @@ func (t Telegram) Process(update *tgbotapi.Update) {
 			log.Printf("error in send: %v", err)
 			return
 		}
+	} else {
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Send me only voice message and I will use my superpowers to amplify it 😏")
+		msg.ReplyToMessageID = update.Message.MessageID
+		t.bot.Send(msg)
 	}
 
 }
