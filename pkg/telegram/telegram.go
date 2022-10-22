@@ -4,7 +4,6 @@ import (
 	"amplify_bot/pkg/ffmpeg"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -31,7 +30,7 @@ func (t Telegram) Process(update *tgbotapi.Update) {
 			return
 		}
 
-		downloadedVoiceMessage, err := ioutil.TempFile("", "vm.*.oga")
+		downloadedVoiceMessage, err := os.CreateTemp("", "vm.*.oga")
 
 		url := fmt.Sprintf("https://api.telegram.org/file/bot%s/%s", t.bot.Token, file.FilePath)
 
@@ -45,14 +44,16 @@ func (t Telegram) Process(update *tgbotapi.Update) {
 		amplified, err := ffmpeg.Amplify(downloadedVoiceMessage.Name())
 		if err != nil {
 			log.Printf("error in amplify: %v", err)
+			t.sendMessageResponse(update, "Sorry, has an error amplifying it 😞")
 			return
 		}
 
 		defer os.Remove(amplified.Name())
 
-		responseBytes, err := ioutil.ReadFile(amplified.Name())
+		responseBytes, err := os.ReadFile(amplified.Name())
 		if err != nil {
 			fmt.Println("error in read: %v", err)
+			t.sendMessageResponse(update, "Sorry, has an error amplifying it 😞")
 			return
 		}
 
@@ -64,11 +65,15 @@ func (t Telegram) Process(update *tgbotapi.Update) {
 			return
 		}
 	} else {
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Send me only voice message and I will use my superpowers to amplify it 😏")
-		msg.ReplyToMessageID = update.Message.MessageID
-		t.bot.Send(msg)
+		t.sendMessageResponse(update, "Send me only voice message and I will use my superpowers to amplify it 😏")
 	}
 
+}
+
+func (t Telegram) sendMessageResponse(update *tgbotapi.Update, message string) {
+	msg := tgbotapi.NewMessage(update.Message.Chat.ID, message)
+	msg.ReplyToMessageID = update.Message.MessageID
+	t.bot.Send(msg)
 }
 
 func downloadFile(filepath string, url string) (err error) {
